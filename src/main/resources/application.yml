@@ -1,0 +1,48 @@
+spring:       
+  thymeleaf:
+   cache: false
+   prefix: classpath:/templates/
+   suffix: .html
+   encoding: UTF-8
+   content-type: text/html
+   mode: HTML5
+server:
+  port: 8080   
+mybatis:
+  typeAliasesPackage: com.example.oauth2.domain
+
+   
+security:
+  oauth2:
+    client:
+      client-id: client
+      client-secret: secret
+      scope: read,write
+      auto-approve-scopes: authorization_code,refresh_token,password    
+  basic:
+    enabled: false       
+      
+---
+spring:
+  profiles: dev
+  datasource:
+    name: test
+#    type: com.alibaba.druid.pool.DruidDataSource
+    url: jdbc:mysql://localhost:3306/test?characterEncoding=utf-8&allowMultiQueries=true&autoReconnect=true
+    username: root
+    password: 123
+    driver-class-name: com.mysql.jdbc.Driver
+    # 使用druid数据源
+
+#    HTTP ENCODING  
+security:
+  user:
+    name: aaa
+    password: bbb
+  basic:
+    enabled: false
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://aaa:bbb@localhost:8761/eureka/      
