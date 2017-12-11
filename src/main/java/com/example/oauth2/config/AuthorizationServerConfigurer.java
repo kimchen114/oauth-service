@@ -39,7 +39,7 @@ public class AuthorizationServerConfigurer extends AuthorizationServerConfigurer
     @Autowired
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-
+//        clients.jdbc(dataSource).
         clients.inMemory()
             .withClient("client")
             .authorizedGrantTypes("password", "authorization_code", "refresh_token", "implicit")
