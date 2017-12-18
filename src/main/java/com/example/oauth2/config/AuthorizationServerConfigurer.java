@@ -14,60 +14,49 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 
-
 /**
  * 认证服务器
  * 
  * */
 @Configuration
 @EnableAuthorizationServer
-public class AuthorizationServerConfigurer extends AuthorizationServerConfigurerAdapter{
+public class AuthorizationServerConfigurer extends AuthorizationServerConfigurerAdapter {
     
+    @Autowired
+    private UserDetailsServiceImpl userDetailsServiceImpl;
+    //
+    // @Autowired
+    // private UserApprovalHandler userApprovalHandler;
     
-    
-//    @Autowired
-//    private TokenStore tokenStore;
-//
-//    @Autowired
-//    private UserApprovalHandler userApprovalHandler;
-
     @Autowired
     @Qualifier("authenticationManagerBean")
     private AuthenticationManager authenticationManager;
     
-    
     @Autowired
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-//        clients.jdbc(dataSource).
-        clients.inMemory()
-            .withClient("client")
-            .authorizedGrantTypes("password", "authorization_code", "refresh_token", "implicit")
-            .authorities("ROLE_CLIENT", "ROLE_TRUSTED_CLIENT")
-            .scopes("read", "write", "trust")
-            .secret("secret")
-            .accessTokenValiditySeconds(1200)//Access token is only valid for 20 minutes.
-            .refreshTokenValiditySeconds(6000);//Refresh token is only valid for 100 minutes.
+        // clients.jdbc(dataSource).
+        clients.inMemory().withClient("client")
+                .authorizedGrantTypes("password", "authorization_code", "refresh_token", "implicit")
+                .authorities("ROLE_CLIENT", "ROLE_TRUSTED_CLIENT").scopes("read", "write", "trust").secret("secret")
+                .accessTokenValiditySeconds(1200)// Access token is only valid
+                                                 // for 20 minutes.
+                .refreshTokenValiditySeconds(6000);// Refresh token is only
+                                                   // valid for 100 minutes.
     }
-
-
-    @Override//声明安全约束，哪些允许访问，哪些不允许访问
+    
+    @Override // 声明安全约束，哪些允许访问，哪些不允许访问
     public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
-//        oauthServer.realm(REALM+"/client");
-        oauthServer.allowFormAuthenticationForClients();  
+        // oauthServer.realm(REALM+"/client");
+        oauthServer.allowFormAuthenticationForClients();
     }
     
-    
-    
-    
-    @Override
+    @Override // 声明授权和token的端点以及token的服务的一些配置信息，比如采用什么存储方式、token的有效期等
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.tokenStore(tokenStore()).tokenEnhancer(jwtAccessTokenConverter())
-                .authenticationManager(authenticationManager);
+                .authenticationManager(authenticationManager).userDetailsService(userDetailsServiceImpl);
     }
-
-
-
+    
     @Bean
     public TokenStore tokenStore() {
         return new JwtTokenStore(jwtAccessTokenConverter());
@@ -79,7 +68,5 @@ public class AuthorizationServerConfigurer extends AuthorizationServerConfigurer
         converter.setSigningKey("123");
         return converter;
     }
-    
-    
     
 }

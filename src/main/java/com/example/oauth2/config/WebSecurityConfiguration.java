@@ -13,39 +13,35 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-@Configuration 
+@Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
-public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter  {
+public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter {
     
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
-    @Autowired
-    private  LoginSuccessHandler successHandler;
+    // @Autowired
+    // private LoginSuccessHandler successHandler;
     
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.inMemoryAuthentication().withUser("reader").password("reader").authorities("FOO_READ").and()
+                .withUser("writer").password("writer").authorities("FOO_READ", "FOO_WRITE");
+        
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+    }
     
-
-	  @Override
-	  protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		  auth.inMemoryAuthentication().withUser("reader").password("reader").authorities("FOO_READ").and()
-              	.withUser("writer").password("writer").authorities("FOO_READ", "FOO_WRITE");
-
-      	  auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
-	  }   
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http.csrf().disable().headers().disable().authorizeRequests()
+                .antMatchers("/login/**", "/js/**", "/css/**", "/img/**", "/oauth/**", "/oauth/token",
+                        "oauth/authorize")
+                .permitAll().anyRequest().authenticated().and().formLogin().loginPage("/login")
+                .passwordParameter("password").usernameParameter("username").permitAll()
+                // .failureUrl("/login").successHandler(successHandler)
+                .and().logout().logoutUrl("/logout").invalidateHttpSession(true).deleteCookies("token");
+    }
     
-    
-//    @Override
-//    protected void configure(HttpSecurity http) throws Exception {
-//    	 http.csrf().disable().headers().disable().authorizeRequests()
-// 	    .antMatchers("/login/**","/js/**","/css/**","/img/**","/oauth/**","/oauth/token","oauth/authorize").permitAll()
-// 	    .anyRequest().authenticated() 
-// 	    .and()
-// 	    .formLogin().loginPage("/login").passwordParameter("password").usernameParameter("username").permitAll()
-//	    .failureUrl("/login").successHandler(successHandler)
-//	    .and()
-//	    .logout().logoutUrl("/logout").invalidateHttpSession(true).deleteCookies("token");
-//    }
-
     @Override
     @Bean
     public AuthenticationManager authenticationManagerBean() throws Exception {
@@ -53,11 +49,8 @@ public class WebSecurityConfiguration extends WebSecurityConfigurerAdapter  {
     }
     
     @Bean
-	public PasswordEncoder passwordEncoder(){
-		return new BCryptPasswordEncoder();
-	}
-    
-    
-    
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
     
 }

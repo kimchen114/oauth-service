@@ -21,20 +21,20 @@ import com.example.oauth2.service.SysUserService;
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
     
-	@Autowired
-	private SysUserService sysUserService;
-	
+    @Autowired
+    private SysUserService sysUserService;
+    
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    	if (StringUtils.isBlank(username)) {
-			throw new UsernameNotFoundException("用户名不能为空");
-		}
-		SysUser sysUser = sysUserService.getByUsername(username);
-		if(sysUser==null) {
-			throw new UsernameNotFoundException("该用户不存在");
-		}
-    	
-    	List<String> roles = new ArrayList<String>();
+        if (StringUtils.isBlank(username)) {
+            throw new UsernameNotFoundException("用户名不能为空");
+        }
+        SysUser sysUser = sysUserService.getByUsername(username);
+        if (sysUser == null) {
+            throw new UsernameNotFoundException("该用户不存在");
+        }
+        
+        List<String> roles = new ArrayList<String>();
         Set<GrantedAuthority> authorities = new HashSet<>();
         
         roles.add("ROLE_user");
