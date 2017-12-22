@@ -4,12 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
-import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
@@ -22,51 +22,48 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 @EnableAuthorizationServer
 public class AuthorizationServerConfigurer extends AuthorizationServerConfigurerAdapter {
     
-    @Autowired
-    private UserDetailsServiceImpl userDetailsServiceImpl;
-    //
-    // @Autowired
-    // private UserApprovalHandler userApprovalHandler;
-    
-    @Autowired
-    @Qualifier("authenticationManagerBean")
-    private AuthenticationManager authenticationManager;
-    
-    @Autowired
-    @Override
-    public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        // clients.jdbc(dataSource).
-        clients.inMemory().withClient("client")
-                .authorizedGrantTypes("password", "authorization_code", "refresh_token", "implicit")
-                .authorities("ROLE_CLIENT", "ROLE_TRUSTED_CLIENT").scopes("read", "write", "trust").secret("secret")
-                .accessTokenValiditySeconds(1200)// Access token is only valid
-                                                 // for 20 minutes.
-                .refreshTokenValiditySeconds(6000);// Refresh token is only
-                                                   // valid for 100 minutes.
-    }
-    
-    @Override // 声明安全约束，哪些允许访问，哪些不允许访问
-    public void configure(AuthorizationServerSecurityConfigurer oauthServer) throws Exception {
-        // oauthServer.realm(REALM+"/client");
-        oauthServer.allowFormAuthenticationForClients();
-    }
-    
-    @Override // 声明授权和token的端点以及token的服务的一些配置信息，比如采用什么存储方式、token的有效期等
-    public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
-        endpoints.tokenStore(tokenStore()).tokenEnhancer(jwtAccessTokenConverter())
-                .authenticationManager(authenticationManager).userDetailsService(userDetailsServiceImpl);
-    }
-    
-    @Bean
-    public TokenStore tokenStore() {
-        return new JwtTokenStore(jwtAccessTokenConverter());
-    }
-    
-    @Bean
-    protected JwtAccessTokenConverter jwtAccessTokenConverter() {
-        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
-        converter.setSigningKey("123");
-        return converter;
-    }
+		@Autowired
+	    private UserDetailsServiceImpl userDetailsServiceImpl;
+		
+	    @Override
+	    public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+	        clients.inMemory().withClient("client").secret("secret")
+	                .scopes("FOO").autoApprove(true)
+	                .authorities("FOO_READ", "FOO_WRITE")
+	                .authorizedGrantTypes("implicit", "refresh_token", "password", "authorization_code")
+	                .accessTokenValiditySeconds(60*60).refreshTokenValiditySeconds(60*60*10);
+	    }
+
+	    @Override
+	    public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+	    	endpoints.allowedTokenEndpointRequestMethods(HttpMethod.GET,HttpMethod.POST);
+	        endpoints.tokenStore(tokenStore()).tokenEnhancer(jwtTokenEnhancer())
+	                .authenticationManager(authenticationManager).userDetailsService(userDetailsServiceImpl);
+	    }
+
+	    @Autowired
+	    @Qualifier("authenticationManagerBean")
+	    private AuthenticationManager authenticationManager;
+
+	    @Bean
+	    public TokenStore tokenStore() {
+	        return new JwtTokenStore(jwtTokenEnhancer());
+	    }
+
+	    //    @Bean
+	    //    protected JwtAccessTokenConverter jwtTokenEnhancer() {
+	    //    KeyStoreKeyFactory keyStoreKeyFactory =
+	    //            new KeyStoreKeyFactory(new ClassPathResource("jwt.jks"), "mySecretKey".toCharArray());
+	    //        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+	    //        converter.setKeyPair(keyStoreKeyFactory.getKeyPair("jwt"));
+	    //        return converter;
+	    //    }
+
+	    @Bean
+	    protected JwtAccessTokenConverter jwtTokenEnhancer() {
+	        JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
+	        converter.setSigningKey("123");
+	        return converter;
+	    }
     
 }

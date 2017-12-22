@@ -20,8 +20,11 @@ security:
       scope: read,write
       auto-approve-scopes: authorization_code,refresh_token,password    
   basic:
-    enabled: false       
-      
+    enabled: false   
+logging:
+  level:            
+#    org.springframework: DEBUG      
+    com.example.oauth2: DEBUG
 ---
 spring:
   profiles: dev
